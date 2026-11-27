@@ -21,18 +21,16 @@ function handle(req: AgentRequest): unknown {
 }
 
 /**
- * Zoya's helper inside web pages. It only listens for messages from Zoya's own panel
+ * Zoya's helper inside web pages. It only answers messages from Zoya's own panel
  * and does nothing else on its own.
+ * No "already loaded" guard: after Zoya is reloaded, an old copy in the tab stops
+ * working, so every fresh copy must listen. If two copies are ever active, the first
+ * answer wins, which is harmless.
  */
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_idle",
   main() {
-    // If Zoya loads this script into a tab a second time, don't listen twice.
-    const flags = window as unknown as { __zoyaAgentReady?: boolean };
-    if (flags.__zoyaAgentReady) return;
-    flags.__zoyaAgentReady = true;
-
     browser.runtime.onMessage.addListener((message: unknown, _sender: unknown, sendResponse: (response: unknown) => void) => {
       const req = message as AgentRequest | undefined;
       if (!req || req.zoya !== true) return undefined;
