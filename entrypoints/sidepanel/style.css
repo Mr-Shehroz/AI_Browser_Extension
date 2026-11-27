@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night: #070a14;
+  --color-deep: #0f1528;
+  --color-steel: #1c2542;
+  --color-haze: #c9d2e6;
+  --color-dim: #7d89a8;
+  --color-teal: #2ee6d6;
+  --color-amber: #ff9a3c;
+  --color-ember: #ff4d5e;
+  --font-display: "Big Shoulders Variable", "Arial Narrow", sans-serif;
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+}
+
+:root { color-scheme: dark; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--color-haze);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(90% 35% at 0% 0%, rgb(46 230 214 / 0.11), transparent 70%),
+    radial-gradient(80% 35% at 100% 100%, rgb(255 154 60 / 0.09), transparent 70%),
+    var(--color-night);
+  background-attachment: fixed;
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--color-steel) transparent; }
+
+@layer components {
+  .rail-panel {
+    border-radius: 12px;
+    border: 1px solid rgb(255 255 255 / 0.06);
+    background: linear-gradient(180deg, rgb(28 37 66 / 0.55), rgb(15 21 40 / 0.55));
+    padding: 1rem;
+  }
+  .cine-input {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--color-steel);
+    background: rgb(7 10 20 / 0.7);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cine-input::placeholder { color: var(--color-dim); }
+  .cine-input:focus { border-color: var(--color-teal); box-shadow: 0 0 0 3px rgb(46 230 214 / 0.15); }
+  .cine-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    border-radius: 999px;
+    border: 1px solid var(--color-steel);
+    background: rgb(28 37 66 / 0.6);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-haze);
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  }
+  .cine-btn:hover:not(:disabled) { background: var(--color-steel); color: #fff; }
+  .cine-btn:active:not(:disabled) { transform: scale(0.97); }
+  .cine-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .cine-btn:focus-visible, .cine-input:focus-visible { outline: 2px solid var(--color-teal); outline-offset: 2px; }
+  .cine-btn-primary { border-color: transparent; background: var(--color-teal); color: #04201d; }
+  .cine-btn-primary:hover:not(:disabled) { background: #5ff0e3; color: #04201d; box-shadow: 0 0 22px -4px rgb(46 230 214 / 0.75); }
+  .cine-btn-danger { border-color: transparent; background: var(--color-ember); color: #fff; }
+  .cine-btn-danger:hover:not(:disabled) { background: #ff6b79; box-shadow: 0 0 22px -4px rgb(255 77 94 / 0.75); }
+  .frame-card {
+    border-radius: 8px;
+    border: 1px solid rgb(255 255 255 / 0.06);
+    background: rgb(7 10 20 / 0.65);
+    padding: 0.55rem 0.7rem;
+  }
+  .frame-card[data-status="running"] { border-color: rgb(46 230 214 / 0.6); }
+  .frame-card[data-status="pending_approval"] { border-color: rgb(255 154 60 / 0.65); }
+  .frame-card[data-status="failed"], .frame-card[data-status="blocked"] { border-color: rgb(255 77 94 / 0.55); }
+
+  .stage-card {
+    --mood: #3a4770;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #0d1224, #070a14);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--mood) 60%, transparent),
+      0 0 40px -12px color-mix(in srgb, var(--mood) 70%, transparent);
+    transition: box-shadow 0.5s ease;
+  }
+  .stage-card[data-mood="running"] { --mood: var(--color-teal); }
+  .stage-card[data-mood="approval"] { --mood: var(--color-amber); }
+  .stage-card[data-mood="alert"] { --mood: var(--color-ember); }
+
+  .rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-dim); flex-shrink: 0; }
+  .rec-dot.is-live { background: var(--color-teal); box-shadow: 0 0 10px var(--color-teal); animation: pulse-dot 1.2s ease-in-out infinite; }
+}
+
+@keyframes pulse-dot { 50% { opacity: 0.35; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rec-dot.is-live { animation: none; }
+}

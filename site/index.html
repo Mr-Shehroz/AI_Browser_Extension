@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zoya · Your AI helper in Chrome</title>
+  <meta name="description" content="Zoya is a friendly AI agent that works in your browser, asks before anything important, and talks to you in English or Urdu." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,700;10..72,900&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --night: #070a14; --deep: #0f1528; --steel: #1c2542; --haze: #c9d2e6; --dim: #7d89a8;
+      --teal: #2ee6d6; --amber: #ff9a3c; --ember: #ff4d5e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; color: var(--haze); font-family: "Manrope", system-ui, sans-serif; line-height: 1.6;
+      background:
+        radial-gradient(60% 40% at 10% 0%, rgb(46 230 214 / .14), transparent 70%),
+        radial-gradient(50% 40% at 100% 60%, rgb(255 154 60 / .10), transparent 70%),
+        var(--night);
+    }
+    a { color: var(--teal); }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    header { padding: 72px 0 48px; }
+    .eyebrow { color: var(--dim); font-size: 14px; letter-spacing: .04em; }
+    h1 { font-family: "Big Shoulders", sans-serif; font-weight: 900; color: #fff; font-size: clamp(56px, 11vw, 120px); line-height: .9; margin: 8px 0 20px; }
+    h1 span { color: var(--teal); }
+    .lead { font-size: 19px; max-width: 620px; }
+    .cta { display: inline-block; margin-top: 28px; padding: 14px 28px; border-radius: 999px; background: var(--teal); color: #04201d; font-weight: 700; text-decoration: none; }
+    .cta:hover { box-shadow: 0 0 30px -6px var(--teal); }
+    .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+    h2 { font-family: "Big Shoulders", sans-serif; font-weight: 900; color: #fff; font-size: 44px; margin: 64px 0 16px; line-height: 1; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { border: 1px solid rgb(255 255 255 / .06); border-radius: 14px; padding: 20px; background: linear-gradient(180deg, rgb(28 37 66 / .55), rgb(15 21 40 / .55)); }
+    .card h3 { margin: 0 0 6px; color: #fff; font-size: 17px; }
+    .card p { margin: 0; font-size: 15px; }
+    ol.steps { counter-reset: s; list-style: none; padding: 0; }
+    ol.steps li { counter-increment: s; position: relative; padding: 0 0 18px 52px; }
+    ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--steel); color: var(--teal); font-weight: 700; }
+    ol.steps strong { color: #fff; }
+    code { background: var(--steel); padding: 2px 6px; border-radius: 6px; color: #fff; }
+    .note { border-left: 3px solid var(--amber); padding: 12px 16px; background: rgb(255 154 60 / .06); border-radius: 0 10px 10px 0; }
+    footer { padding: 64px 0 40px; color: var(--dim); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">NexForce · Free Chrome extension</p>
+      <h1>Meet <span>Zoya</span></h1>
+      <p class="lead">A friendly AI helper that works in your browser. Ask her to search, read, fill in and click through websites, by typing or by talking, in English or Urdu. She always asks before anything important.</p>
+      <a class="cta" href="https://github.com/YOUR-GITHUB-NAME/nexforce-ext/releases/latest">Download Zoya</a>
+    </header>
+
+    <section aria-labelledby="what">
+      <h2 id="what">What she does</h2>
+      <div class="grid">
+        <div class="card"><h3>Works in her own tab</h3><p>Zoya uses a tab group called “Zoya”, so your other tabs stay yours.</p></div>
+        <div class="card"><h3>Asks before risky steps</h3><p>Submitting, sending, buying or deleting always needs your OK. Things that can't be undone need a click.</p></div>
+        <div class="card"><h3>Talks with you</h3><p>Hands-free voice in English or Urdu. Say “stop” or “رکو” any time.</p></div>
+        <div class="card"><h3>Learns skills</h3><p>Save a task that worked, test it, approve it, and she'll do it faster next time.</p></div>
+        <div class="card"><h3>Your choice of AI</h3><p>Google Gemini (free tier), OpenAI, Claude, other compatible providers, or private local Ollama.</p></div>
+        <div class="card"><h3>Your data stays yours</h3><p>Your key and settings stay in your Chrome. Shared knowledge packs never include keys, passwords or logins.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="install">
+      <h2 id="install">Install in 5 minutes</h2>
+      <ol class="steps">
+        <li><strong>Download</strong> the latest ZIP from the button above and extract it to a folder you'll keep (for example <code>Documents\Zoya</code>).</li>
+        <li>In Chrome, open <code>chrome://extensions</code> and switch on <strong>Developer mode</strong> (top right).</li>
+        <li>Click <strong>Load unpacked</strong> and choose the extracted folder.</li>
+        <li>Click the puzzle-piece icon in Chrome's toolbar and <strong>pin “NexForce with Zoya”</strong>. Click it to open Zoya.</li>
+        <li>Get a free key at <a href="https://aistudio.google.com" target="_blank" rel="noopener">Google AI Studio</a> (<strong>Get API key → Create API key</strong>, no card needed), and paste it into Zoya's setup.</li>
+      </ol>
+      <p class="note">Keep the folder where it is. If you delete or move it, Chrome removes the extension. To update, replace the folder's contents with the new version and click the reload icon on <code>chrome://extensions</code>.</p>
+    </section>
+
+    <section aria-labelledby="privacy">
+      <h2 id="privacy">Good to know</h2>
+      <div class="grid">
+        <div class="card"><h3>Cloud AI</h3><p>With a cloud provider, the page text Zoya reads and what you ask are sent to that company. Use local Ollama, or do it yourself, for banking and private accounts.</p></div>
+        <div class="card"><h3>Voice</h3><p>Listening uses Chrome's speech service (Google). Chrome has no Urdu voice, so Urdu replies are shown as text. Microsoft Edge has a free Urdu voice, and Zoya works there too.</p></div>
+        <div class="card"><h3>Free limits</h3><p>Free AI tiers have daily limits. Zoya tells you if you hit one, and can switch to a backup provider.</p></div>
+      </div>
+    </section>
+
+    <footer>Made by Shehroz · NexForce</footer>
+  </div>
+</body>
+</html>
