@@ -124,7 +124,8 @@ Rules:
 5. After a failed step, look at the page before trying again. Don't repeat a failing action.
 6. Before an unfamiliar or consequential step, research the official help or documentation page if the notes don't cover it. Don't research more than you need.
 7. Saved skills and site notes worked before but may be outdated. Check every step against the current page.
-8. Use finish only when the page shows the goal is done, or you can't continue. Never claim something happened unless the page confirms it.
+8. Go straight to sites. Navigate to a site's address, or to its own search page (for example https://www.youtube.com/results?search_query=sad+songs), instead of looking the site up on Google.
+9. Use finish only when the page shows the goal is done, or you can't continue. Never claim something happened unless the page confirms it.
 
 Reply with one JSON object and nothing else, for example:
 {"thought": "...", "action": "click", "ref": "e12"}`;

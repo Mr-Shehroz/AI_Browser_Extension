@@ -6,7 +6,19 @@ const SAFE_UI = /\b(next|previous|back|menu|open|show|expand|collapse|view|detai
 
 export interface RiskAssessment { risk: RiskLevel; reason: string }
 
-export function assessRisk(action: BrowserAction, el?: InteractiveElement): RiskAssessment {
+/** A search box: pressing Enter there only runs a search, so it's safe. */
+const isSearchField = (el: InteractiveElement) =>
+  el.type === "search" ||
+  el.role === "searchbox" ||
+  el.role === "combobox" ||
+  /search|query|find|lookup|تلاش|^q$/i.test(el.name);
+
+/**
+ * How risky one action is.
+ * `el` is the element being clicked or typed into.
+ * `lastTyped` is the field typed into just before (used to judge what Enter will do).
+ */
+export function assessRisk(action: BrowserAction, el?: InteractiveElement, lastTyped?: InteractiveElement): RiskAssessment {
   switch (action.type) {
     case "scroll":
     case "back":
@@ -32,9 +44,9 @@ export function assessRisk(action: BrowserAction, el?: InteractiveElement): Risk
       return { risk: "reversible", reason: "Fills a field. Nothing is saved until it's submitted." };
 
     case "press":
-      return action.key.toLowerCase() === "enter"
-        ? { risk: "impactful", reason: "Enter may submit a form." }
-        : { risk: "reversible", reason: "Keyboard input." };
+      if (action.key.toLowerCase() !== "enter") return { risk: "reversible", reason: "Keyboard input." };
+      if (lastTyped && isSearchField(lastTyped)) return { risk: "reversible", reason: "Runs a search." };
+      return { risk: "impactful", reason: "Enter may submit a form." };
 
     case "click": {
       if (!el) return { risk: "impactful", reason: "Unknown element, so it's treated as impactful." };
