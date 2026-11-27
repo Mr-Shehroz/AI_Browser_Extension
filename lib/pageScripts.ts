@@ -14,44 +14,48 @@ export interface RawObservation {
 
 export interface PageResult { ok: boolean; error?: string }
 
-export function observePage(): RawObservation {
-  const SELECTOR =
-    'a[href], button, input:not([type="hidden"]), textarea, select, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
-  document.querySelectorAll("[data-agent-ref]").forEach((el) => el.removeAttribute("data-agent-ref"));
-  const elements: InteractiveElement[] = [];
-  let i = 0;
-  for (const node of Array.from(document.querySelectorAll<HTMLElement>(SELECTOR))) {
-    if (elements.length >= 150) break;
-    const r = node.getBoundingClientRect();
-    const s = getComputedStyle(node);
-    if (r.width === 0 || r.height === 0 || s.visibility === "hidden" || s.display === "none") continue;
-    const ref = `e${i++}`;
-    node.setAttribute("data-agent-ref", ref);
-    const type = node.getAttribute("type") ?? undefined;
-    const buttonValue = type === "submit" || type === "button" ? (node as HTMLInputElement).value : "";
-    const name =
-      node.getAttribute("aria-label") || node.innerText || node.getAttribute("placeholder") ||
-      node.getAttribute("title") || buttonValue || node.getAttribute("name") || "";
-    elements.push({
-      ref,
-      role: node.getAttribute("role") || node.tagName.toLowerCase(),
-      type,
-      name: String(name).replace(/\s+/g, " ").trim().slice(0, 100),
-      inViewport: r.top < innerHeight && r.bottom > 0,
-    });
+export function observePage(): RawObservation | { error: string } {
+  try {
+    const SELECTOR =
+      'a[href], button, input:not([type="hidden"]), textarea, select, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
+    document.querySelectorAll("[data-agent-ref]").forEach((el) => el.removeAttribute("data-agent-ref"));
+    const elements: InteractiveElement[] = [];
+    let i = 0;
+    for (const node of Array.from(document.querySelectorAll<HTMLElement>(SELECTOR))) {
+      if (elements.length >= 150) break;
+      const r = node.getBoundingClientRect();
+      const s = getComputedStyle(node);
+      if (r.width === 0 || r.height === 0 || s.visibility === "hidden" || s.display === "none") continue;
+      const ref = `e${i++}`;
+      node.setAttribute("data-agent-ref", ref);
+      const type = node.getAttribute("type") ?? undefined;
+      const buttonValue = type === "submit" || type === "button" ? String((node as HTMLInputElement).value ?? "") : "";
+      const label =
+        node.getAttribute("aria-label") || (typeof node.innerText === "string" ? node.innerText : "") ||
+        node.getAttribute("placeholder") || node.getAttribute("title") || buttonValue || node.getAttribute("name") || "";
+      elements.push({
+        ref,
+        role: node.getAttribute("role") || node.tagName.toLowerCase(),
+        type,
+        name: String(label).replace(/\s+/g, " ").trim().slice(0, 100),
+        inViewport: r.top < window.innerHeight && r.bottom > 0,
+      });
+    }
+    const blockers: string[] = [];
+    if (document.querySelector('iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="challenges.cloudflare.com"]')) {
+      blockers.push("captcha");
+    }
+    if (document.querySelector('input[type="password"]')) blockers.push("login_form");
+    return {
+      url: location.href,
+      title: document.title,
+      text: (document.body ? document.body.innerText : "").replace(/\n{3,}/g, "\n\n").slice(0, 4000),
+      elements,
+      blockers,
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) };
   }
-  const blockers: string[] = [];
-  if (document.querySelector('iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="challenges.cloudflare.com"]')) {
-    blockers.push("captcha");
-  }
-  if (document.querySelector('input[type="password"]')) blockers.push("login_form");
-  return {
-    url: location.href,
-    title: document.title,
-    text: (document.body ? document.body.innerText : "").replace(/\n{3,}/g, "\n\n").slice(0, 4000),
-    elements,
-    blockers,
-  };
 }
 
 export function clickRef(ref: string): PageResult {

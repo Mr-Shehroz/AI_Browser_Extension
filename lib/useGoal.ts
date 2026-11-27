@@ -177,7 +177,8 @@ export function useGoal(agent: AgentApi, settings: Settings) {
         const obs = await agentRef.current.observe();
         if (!isLive(g)) break;
         if (!obs) {
-          askUser(g, "I can't read this page. Could you open a normal website in my tab, then tell me to carry on?");
+          const why = agentRef.current.getLastError();
+          askUser(g, `I can't read this page${why ? ` (${why})` : ""}. Could you check it, then tell me to carry on?`);
           break;
         }
         if (obs.blockers.includes("captcha")) {

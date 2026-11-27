@@ -25,6 +25,7 @@ export function useAgent(settings: Settings) {
   const tabRef = useRef<ZoyaTab | null>(null);
   const obsRef = useRef<PageObservation | null>(null);
   const pendingRef = useRef<PendingApproval | null>(null);
+    const lastErrorRef = useRef<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
@@ -83,15 +84,18 @@ export function useAgent(settings: Settings) {
     setError(null);
     const t = tabRef.current;
     if (!t) {
+      lastErrorRef.current = "my tab isn't open";
       setError("Open Zoya's tab first.");
       return null;
     }
     try {
       const obs = await observeTab(t.id);
+      lastErrorRef.current = null;
       obsRef.current = obs;
       setObservation(obs);
       return obs;
     } catch (e) {
+      lastErrorRef.current = errMsg(e);
       setError(errMsg(e));
       return null;
     }
@@ -158,8 +162,9 @@ export function useAgent(settings: Settings) {
 
   const decide = useCallback((approved: boolean) => pendingRef.current?.resolve(approved), []);
   const cancelPending = useCallback(() => pendingRef.current?.resolve(false), []);
+    const getLastError = useCallback(() => lastErrorRef.current, []);
 
-  return { tab, observation, records, pending, busy, error, getTab, openTab, focusTab, observe, run, decide, cancelPending };
+  return { tab, observation, records, pending, busy, error, getTab, getLastError, openTab, focusTab, observe, run, decide, cancelPending };
 }
 
 export type AgentApi = ReturnType<typeof useAgent>;

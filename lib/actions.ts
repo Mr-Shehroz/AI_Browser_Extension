@@ -52,7 +52,8 @@ function check(result: PageResult | undefined, fallback: string): void {
 
 export async function observeTab(tabId: number): Promise<PageObservation> {
   const raw = await inject(tabId, observePage, []);
-  if (!raw) throw new Error("Couldn't read this page.");
+  if (!raw) throw new Error("Couldn't read this page (the page script returned nothing).");
+  if ("error" in raw) throw new Error(`Couldn't read this page: ${raw.error}`);
   return { ...raw, observedAt: new Date().toISOString() };
 }
 
