@@ -5,7 +5,7 @@ import { isTrustedKey, trustedClick, trustedInsertText, trustedPress } from "./t
 import type { BrowserAction, PageObservation } from "./types";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const CONTENT_SCRIPT = "/content-scripts/agent.js";
+const CONTENT_SCRIPT = "content-scripts/agent.js";
 
 function friendly(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
@@ -27,18 +27,25 @@ async function ask<T>(tabId: number, req: AgentRequest): Promise<T> {
     return (await browser.tabs.sendMessage(tabId, req)) as T;
   } catch (err) {
     if (!notLoaded(err)) throw friendly(err);
-    try {
-      await browser.scripting.executeScript({ target: { tabId }, files: [CONTENT_SCRIPT] });
-    } catch (injectErr) {
-      throw friendly(injectErr);
-    }
-    await sleep(150);
+  }
+  // The helper isn't in this tab yet (for example, the tab was open before Zoya was reloaded): load it.
+  try {
+    await browser.scripting.executeScript({ target: { tabId }, files: [CONTENT_SCRIPT as "/background.js"] });
+  } catch (injectErr) {
+    throw friendly(injectErr);
+  }
+  // Give it a moment to start listening, then try again a few times.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await sleep(250);
     try {
       return (await browser.tabs.sendMessage(tabId, req)) as T;
     } catch (retryErr) {
-      throw friendly(retryErr);
+      lastErr = retryErr;
+      if (!notLoaded(retryErr)) break;
     }
   }
+  throw friendly(lastErr);
 }
 
 export function waitForLoad(tabId: number, timeoutMs: number): Promise<void> {
