@@ -14,12 +14,12 @@ export interface RawObservation {
 
 export interface PageResult { ok: boolean; error?: string }
 
-export function observePage(): RawObservation | { error: string } {
+export function observePage(): string {
   try {
     const SELECTOR =
       'a[href], button, input:not([type="hidden"]), textarea, select, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
     document.querySelectorAll("[data-agent-ref]").forEach((el) => el.removeAttribute("data-agent-ref"));
-    const elements: InteractiveElement[] = [];
+    const elements: { ref: string; role: string; type: string; name: string; inViewport: boolean }[] = [];
     let i = 0;
     for (const node of Array.from(document.querySelectorAll<HTMLElement>(SELECTOR))) {
       if (elements.length >= 150) break;
@@ -28,8 +28,8 @@ export function observePage(): RawObservation | { error: string } {
       if (r.width === 0 || r.height === 0 || s.visibility === "hidden" || s.display === "none") continue;
       const ref = `e${i++}`;
       node.setAttribute("data-agent-ref", ref);
-      const type = node.getAttribute("type") ?? undefined;
-      const buttonValue = type === "submit" || type === "button" ? String((node as HTMLInputElement).value ?? "") : "";
+      const type = node.getAttribute("type") || "";
+      const buttonValue = type === "submit" || type === "button" ? String((node as HTMLInputElement).value || "") : "";
       const label =
         node.getAttribute("aria-label") || (typeof node.innerText === "string" ? node.innerText : "") ||
         node.getAttribute("placeholder") || node.getAttribute("title") || buttonValue || node.getAttribute("name") || "";
@@ -46,15 +46,17 @@ export function observePage(): RawObservation | { error: string } {
       blockers.push("captcha");
     }
     if (document.querySelector('input[type="password"]')) blockers.push("login_form");
-    return {
+    // Sent back as text: Chrome always delivers strings, even when an object would be dropped.
+    return JSON.stringify({
+      ok: true,
       url: location.href,
       title: document.title,
       text: (document.body ? document.body.innerText : "").replace(/\n{3,}/g, "\n\n").slice(0, 4000),
       elements,
       blockers,
-    };
+    });
   } catch (e) {
-    return { error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) };
+    return JSON.stringify({ ok: false, error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) });
   }
 }
 

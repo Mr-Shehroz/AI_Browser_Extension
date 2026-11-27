@@ -17,8 +17,9 @@ function friendly(err: unknown): Error {
 
 async function inject<A extends unknown[], R>(tabId: number, func: (...args: A) => R, args: A): Promise<R> {
   try {
-    const [res] = await browser.scripting.executeScript({ target: { tabId }, func, args });
-    return res?.result as R;
+    const results = await browser.scripting.executeScript({ target: { tabId }, func, args });
+    console.debug("[zoya] page script result", results);
+    return results[0]?.result as R;
   } catch (err) {
     throw friendly(err);
   }
@@ -52,9 +53,19 @@ function check(result: PageResult | undefined, fallback: string): void {
 
 export async function observeTab(tabId: number): Promise<PageObservation> {
   const raw = await inject(tabId, observePage, []);
-  if (!raw) throw new Error("Couldn't read this page (the page script returned nothing).");
-  if ("error" in raw) throw new Error(`Couldn't read this page: ${raw.error}`);
-  return { ...raw, observedAt: new Date().toISOString() };
+  if (typeof raw !== "string") throw new Error("Couldn't read this page (no answer from the page).");
+  const parsed = JSON.parse(raw) as
+    | { ok: true; url: string; title: string; text: string; elements: PageObservation["elements"]; blockers: string[] }
+    | { ok: false; error: string };
+  if (!parsed.ok) throw new Error(`Couldn't read this page: ${parsed.error}`);
+  return {
+    url: parsed.url,
+    title: parsed.title,
+    text: parsed.text,
+    elements: parsed.elements.map((e) => ({ ...e, type: e.type || undefined })),
+    blockers: parsed.blockers,
+    observedAt: new Date().toISOString(),
+  };
 }
 
 /** Runs one action. With `trusted`, clicks, typing and keys go through Chrome's own input system. */
