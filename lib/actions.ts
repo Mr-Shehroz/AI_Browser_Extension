@@ -1,27 +1,43 @@
 import { browser } from "wxt/browser";
-import {
-  clickRef, elementPoint, focusForTyping, observePage, pressKey, scrollPage, typeRef, type PageResult,
-} from "./pageScripts";
+import type { AgentRequest } from "./agentProtocol";
+import type { FocusResult, PageResult, PointResult } from "./pageScripts";
 import { isTrustedKey, trustedClick, trustedInsertText, trustedPress } from "./trustedInput";
 import type { BrowserAction, PageObservation } from "./types";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const CONTENT_SCRIPT = "/content-scripts/agent.js";
 
 function friendly(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
-  if (/cannot access|cannot be scripted|chrome:\/\/|extensions gallery|webstore/i.test(message)) {
+  if (/cannot access|cannot be scripted|chrome:\/\/|edge:\/\/|extensions gallery|webstore/i.test(message)) {
     return new Error("Chrome doesn't let extensions work on this page. Please do this step yourself.");
   }
   return err instanceof Error ? err : new Error(message);
 }
 
-async function inject<A extends unknown[], R>(tabId: number, func: (...args: A) => R, args: A): Promise<R> {
+const notLoaded = (err: unknown) =>
+  /receiving end does not exist|could not establish connection/i.test(err instanceof Error ? err.message : String(err));
+
+/**
+ * Sends a request to Zoya's content script in the tab. If the tab was opened before Zoya
+ * was installed or reloaded, the script is loaded into it first, then the request is retried.
+ */
+async function ask<T>(tabId: number, req: AgentRequest): Promise<T> {
   try {
-    const results = await browser.scripting.executeScript({ target: { tabId }, func, args });
-    console.debug("[zoya] page script result", results);
-    return results[0]?.result as R;
+    return (await browser.tabs.sendMessage(tabId, req)) as T;
   } catch (err) {
-    throw friendly(err);
+    if (!notLoaded(err)) throw friendly(err);
+    try {
+      await browser.scripting.executeScript({ target: { tabId }, files: [CONTENT_SCRIPT] });
+    } catch (injectErr) {
+      throw friendly(injectErr);
+    }
+    await sleep(150);
+    try {
+      return (await browser.tabs.sendMessage(tabId, req)) as T;
+    } catch (retryErr) {
+      throw friendly(retryErr);
+    }
   }
 }
 
@@ -52,7 +68,7 @@ function check(result: PageResult | undefined, fallback: string): void {
 }
 
 export async function observeTab(tabId: number): Promise<PageObservation> {
-  const raw = await inject(tabId, observePage, []);
+  const raw = await ask<string | undefined>(tabId, { zoya: true, op: "observe" });
   if (typeof raw !== "string") throw new Error("Couldn't read this page (no answer from the page).");
   const parsed = JSON.parse(raw) as
     | { ok: true; url: string; title: string; text: string; elements: PageObservation["elements"]; blockers: string[] }
@@ -86,35 +102,34 @@ export async function executeAction(tabId: number, action: BrowserAction, truste
     }
     case "click": {
       if (trusted) {
-        const p = await inject(tabId, elementPoint, [action.ref]);
+        const p = await ask<PointResult>(tabId, { zoya: true, op: "point", ref: action.ref });
         if (!p?.ok || p.x === undefined || p.y === undefined) throw new Error(p?.error ?? "Couldn't find that element.");
         await trustedClick(tabId, p.x, p.y);
       } else {
-        check(await inject(tabId, clickRef, [action.ref]), "The click didn't work.");
+        check(await ask<PageResult>(tabId, { zoya: true, op: "click", ref: action.ref }), "The click didn't work.");
       }
       await settle(tabId);
       return;
     }
     case "type": {
       if (trusted) {
-        const f = await inject(tabId, focusForTyping, [action.ref]);
+        const f = await ask<FocusResult>(tabId, { zoya: true, op: "focus", ref: action.ref });
         if (!f?.ok) throw new Error(f?.error ?? "Couldn't focus that field.");
         if (f.kind === "text") {
           await trustedInsertText(tabId, action.text);
           return;
         }
       }
-      // Dropdowns and anything trusted typing can't handle.
-      check(await inject(tabId, typeRef, [action.ref, action.text]), "Typing didn't work.");
+      check(await ask<PageResult>(tabId, { zoya: true, op: "type", ref: action.ref, text: action.text }), "Typing didn't work.");
       return;
     }
     case "press":
       if (trusted && isTrustedKey(action.key)) await trustedPress(tabId, action.key);
-      else check(await inject(tabId, pressKey, [action.key]), "The key press didn't work.");
+      else check(await ask<PageResult>(tabId, { zoya: true, op: "press", key: action.key }), "The key press didn't work.");
       await settle(tabId);
       return;
     case "scroll":
-      check(await inject(tabId, scrollPage, [action.direction]), "Scrolling didn't work.");
+      check(await ask<PageResult>(tabId, { zoya: true, op: "scroll", direction: action.direction }), "Scrolling didn't work.");
       await sleep(500);
       return;
   }
